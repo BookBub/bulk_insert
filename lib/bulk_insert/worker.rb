@@ -109,7 +109,11 @@ module BulkInsert
           value = @now if value == :__timestamp_placeholder
 
           if ActiveRecord::VERSION::STRING >= "5.0.0"
-            value = @connection.type_cast_from_column(column, value) if column
+            if column
+              # https://github.com/rails/rails/commit/cfa5aa7977c4c3c8e318df196d4dea54fb6b8802
+              type = @connection.lookup_cast_type_from_column(column)
+              value = type.serialize(value)
+            end
             values << @connection.quote(value)
           else
             values << @connection.quote(value, column)
